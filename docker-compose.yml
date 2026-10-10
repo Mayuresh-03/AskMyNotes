@@ -3,7 +3,7 @@ services:
     build: 
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: Demofrontend
+    container_name: AMNfrontend
     ports:
       - "5173:5173"
     volumes:
@@ -20,7 +20,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: Demobackend
+    container_name: AMNbackend
     dns:
       - 8.8.8.8
       - 8.8.4.4
