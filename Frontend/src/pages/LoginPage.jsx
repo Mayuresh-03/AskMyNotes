@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, Loader2, BookOpenCheck, ChevronRight, ShieldCheck } from "lucide-react";
 import { useAuthStore } from '../authStore';
 import { API_BASE_URL } from "../api/apiConfig";
 
@@ -14,184 +14,167 @@ const GoogleIcon = () => (
   </svg>
 );
 
-const MicrosoftIcon = () => (
-  <svg className="h-5 w-5" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M10.7208 1.49805H1.6708V10.548H10.7208V1.49805Z" fill="#F25022"/>
-    <path d="M21.3292 1.49805H12.2792V10.548H21.3292V1.49805Z" fill="#7FBA00"/>
-    <path d="M10.7208 12.0498H1.6708V21.0998H10.7208V12.0498Z" fill="#00A4EF"/>
-    <path d="M21.3292 12.0498H12.2792V21.0998H21.3292V12.0498Z" fill="#FFB900"/>
-  </svg>
-);
-
 const LoginPage = () => {
   const navigate = useNavigate();
-  
-  // --- STORE SELECTORS (Prevent Loop) ---
   const login = useAuthStore((state) => state.login);
   const loginWithToken = useAuthStore((state) => state.loginWithToken);
   const isLoading = useAuthStore((state) => state.loading);
   
-  const [email, setEmail] = useState("user@example.com");
-  const [password, setPassword] = useState("password123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
 
-  // --- Handle Standard Login ---
   const handleLogin = async (e) => {
     e.preventDefault();
     setError(null);
     try {
       await login(email, password);
-      console.log("Login successful. Navigating to App.");
       navigate("/app/dashboard", { replace: true });
     } catch (err) {
       setError(err.message || "Invalid credentials");
-      console.error("Login failed:", err.message);
     }
   };
 
-  // --- Handle Google Login ---
   const handleGoogleLogin = () => {
     const backendUrl = `${API_BASE_URL}/api/auth/login/google`;
     window.open(backendUrl, "oauth-login", "width=500,height=600");
   };
 
-  // --- Listen for Google Popup Response ---
+  // --- Handle Google OAuth Message ---
   useEffect(() => {
-      const handleAuthMessage = (event) => {
-          const { token } = event.data;
-          if (token) {
-              const user = loginWithToken(token);
-              if (user) {
-                  console.log("Google login successful.");
-                  navigate("/app/dashboard", { replace: true });
-              } else {
-                  setError("Failed to authenticate with Google.");
-              }
-          }
-      };
+    const handleAuthMessage = (event) => {
+      // Validate origin if API_BASE_URL is defined
+      if (API_BASE_URL && !event.origin.startsWith(new URL(API_BASE_URL).origin)) {
+        return;
+      }
 
-      window.addEventListener("message", handleAuthMessage);
-      return () => window.removeEventListener("message", handleAuthMessage);
+      if (event.data && event.data.token) {
+        const { token, user } = event.data;
+        
+        // Save session state with user details
+        loginWithToken(token, user);
+        
+        // Redirect to dashboard
+        navigate("/app/dashboard", { replace: true });
+      }
+    };
+  
+    window.addEventListener("message", handleAuthMessage);
+    return () => window.removeEventListener("message", handleAuthMessage);
   }, [loginWithToken, navigate]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-linear-to-br from-blue-600 to-gray-900">
+    <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden bg-slate-900">
       
-      <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
-        <div className="w-full max-w-md bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-8 sm:p-12 border border-white/20">
+      {/* Animated Mesh Background */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-green-900/40 to-slate-950 animate-pulse"></div>
+        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-green-600/20 rounded-full blur-[120px] animate-blob"></div>
+        <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-green-500/10 rounded-full blur-[120px] animate-blob animation-delay-2000"></div>
+      </div>
+
+      <div className="relative z-10 w-full max-w-md">
+        <div className="bg-white/95 backdrop-blur-xl rounded-[3rem] shadow-2xl p-8 sm:p-12 border border-white/20">
           
-          {/* Header */}
-          <div className="text-center mb-6">
-            <Link to="/" className="flex items-center justify-center space-x-2">
-              <div className="bg-blue-600 p-2 rounded-lg">
-                  <Lock className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-2xl font-bold text-gray-800">ProjectName</span>
-            </Link>
+          {/* Logo Branding */}
+          <div className="flex flex-col items-center mb-10">
+            <div className="bg-green-600 p-3.5 rounded-2xl shadow-lg shadow-green-900/30 mb-4">
+                <BookOpenCheck className="h-8 w-8 text-white" />
+            </div>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tighter">AskMyNotes</h2>
+            <div className="flex items-center gap-1.5 mt-1.5">
+                <ShieldCheck size={14} className="text-green-600" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Grounded Study Copilot</span>
+            </div>
           </div>
 
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-extrabold text-gray-900">Welcome Back</h1>
-            <p className="text-gray-600 mt-2">Log in to access your dashboard</p>
-          </div>
-
-          {/* Form */}
           <form onSubmit={handleLogin} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Email Address</label>
-              <div className="relative mt-1">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
-                </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Access Email</label>
+              <div className="group relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-green-600 transition-colors" size={18} />
                 <input
                   type="email"
-                  placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all"
+                  placeholder="name@company.com"
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-slate-900 font-bold focus:ring-2 focus:ring-green-500 focus:bg-white transition-all outline-none"
                   required
                 />
               </div>
             </div>
 
-            <div>
-              <div className="flex justify-between items-center">
-                <label className="block text-sm font-medium text-gray-700">Password</label>
-                <button
-  type="button"
-  onClick={() => navigate("/forgot-email")}
-  className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
->
-  Forgot password?
-</button>
-
+            <div className="space-y-2">
+              <div className="flex justify-between items-center px-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Security Key</label>
+                <button type="button" onClick={() => navigate("/forgot-password")} className="text-[10px] font-bold text-green-600 hover:text-green-700">Forgot?</button>
               </div>
-              <div className="relative mt-1">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
-                </div>
+              <div className="group relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-green-600 transition-colors" size={18} />
                 <input
                   type="password"
-                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all"
+                  placeholder="••••••••"
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-slate-900 font-bold focus:ring-2 focus:ring-green-500 focus:bg-white transition-all outline-none"
                   required
                 />
               </div>
             </div>
 
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-600 text-center">{error}</p>
+              <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-center">
+                <p className="text-[11px] font-bold text-red-600 uppercase tracking-tight">{error}</p>
               </div>
             )}
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 shadow-lg hover:shadow-blue-500/30 disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full h-16 bg-green-600 text-white font-black rounded-2xl hover:bg-green-700 shadow-xl shadow-green-900/20 transition-all active:scale-[0.98] disabled:opacity-80 flex items-center justify-center gap-3 group overflow-hidden relative"
             >
-              {isLoading ? "Logging in..." : "Log In"}
+              {isLoading ? (
+                <Loader2 className="h-6 w-6 animate-spin" />
+              ) : (
+                <>
+                  <span className="uppercase tracking-widest text-xs">Authorize Entry</span>
+                  <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
             </button>
           </form>
 
-          {/* Social Auth */}
-          <div className="relative my-8">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-gray-300"></span>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Or login with</span>
-            </div>
+          <div className="relative my-10">
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
+            <div className="relative flex justify-center text-[10px] font-black text-slate-300 uppercase tracking-[0.3em] bg-white px-4">Instant Access</div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <button 
-                type="button" 
-                onClick={handleGoogleLogin} 
-                className="w-full flex items-center justify-center space-x-3 py-3 px-4 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors bg-white"
-            >
-              <GoogleIcon />
-              <span>Google</span>
-            </button>
-            <button 
-                type="button" 
-                className="w-full flex items-center justify-center space-x-3 py-3 px-4 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors bg-white"
-            >
-              <MicrosoftIcon />
-              <span>Microsoft</span>
-            </button>
-          </div>
+          <button 
+            type="button" 
+            onClick={handleGoogleLogin} 
+            className="w-full flex items-center justify-center gap-3 py-4 border border-slate-100 rounded-2xl text-slate-700 font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all bg-white shadow-sm active:scale-95"
+          >
+            <GoogleIcon />
+            <span>Google Hub</span>
+          </button>
 
-          <p className="text-center text-sm text-gray-600 mt-8">
-            Don't have an account?{" "}
-            <Link to="/signup" className="font-medium text-blue-600 hover:text-blue-700 hover:underline transition-colors">
-              Sign Up
-            </Link>
+          <p className="text-center text-[11px] text-slate-400 mt-10 font-bold uppercase tracking-widest">
+            New Scholar? <Link to="/signup" className="text-green-600 hover:text-green-700 underline underline-offset-4 decoration-2">Create Account</Link>
           </p>
         </div>
       </div>
+
+      <style>{`
+        @keyframes blob {
+          0% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(40px, -60px) scale(1.1); }
+          66% { transform: translate(-30px, 30px) scale(0.9); }
+          100% { transform: translate(0, 0) scale(1); }
+        }
+        .animate-blob { animation: blob 8s infinite; }
+        .animation-delay-2000 { animation-delay: 2s; }
+      `}</style>
     </div>
   );
 };

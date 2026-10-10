@@ -3,243 +3,237 @@ import { useAuthStore } from '../authStore';
 import { 
   User, 
   Mail, 
-  Phone, 
-  MapPin, 
   Briefcase, 
   Camera, 
   Save, 
   X,
-  Edit2
+  Edit2,
+  ShieldCheck,
+  Languages,
+  Mic2,
+  Trophy,
+  Volume2,
+  Settings as SettingsIcon
 } from 'lucide-react';
 
 const ProfilePage = () => {
-  // 1. Get user data from Global Store
   const user = useAuthStore((state) => state.user);
-  
-  // 2. Local State for Form Handling
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Initialize form with store data (or defaults)
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
-    phone: '',
-    location: '',
-    bio: '',
-    role: ''
+    language: 'English',
+    voiceEnabled: true,
+    teacherMode: 'Encouraging'
   });
 
-  // Load user data when component mounts
   useEffect(() => {
     if (user) {
-      setFormData({
-        full_name: user.full_name || 'User Name',
+      setFormData(prev => ({
+        ...prev,
+        full_name: user.full_name || 'Scholar Name',
         email: user.email || '',
-        phone: user.phone || '',       // Assuming these fields exist in your user object
-        location: user.location || '', // or serve as placeholders
-        bio: user.bio || '',
-        role: user.role || 'User'
-      });
+        role: user.role || 'Student'
+      }));
     }
   }, [user]);
 
-  // Handle Input Changes
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({ 
+      ...prev, 
+      [name]: type === 'checkbox' ? checked : value 
+    }));
   };
 
-  // Handle Save (Simulated API Call)
   const handleSave = async () => {
     setIsLoading(true);
-    
-    // Simulate API delay
     setTimeout(() => {
-      console.log("Saving profile data:", formData);
-      // Here you would call: await api.updateProfile(formData);
-      // And then update the authStore with set({ user: updatedUser });
-      
       setIsLoading(false);
       setIsEditing(false);
     }, 1000);
   };
 
-  // Handle Cancel
-  const handleCancel = () => {
-    // Reset to original user data
-    if (user) {
-        setFormData(prev => ({
-            ...prev,
-            full_name: user.full_name || '',
-            phone: user.phone || '',
-            location: user.location || '',
-            bio: user.bio || ''
-        }));
-    }
-    setIsEditing(false);
-  };
-
   return (
-    <div className="max-w-4xl mx-auto pb-10">
+    <div className="max-w-4xl mx-auto pb-10 p-4 space-y-4">
       
-      {/* --- Header / Cover Image --- */}
-      <div className="relative h-48 rounded-xl bg-linear-to-r from-blue-600 to-indigo-700 overflow-hidden shadow-lg">
-        <div className="absolute inset-0 bg-black/10"></div>
-        {/* Decorative Circles */}
-        <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
-        <div className="absolute bottom-0 left-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+      {/* --- Header Section --- */}
+      <div className="relative h-40 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-green-900 overflow-hidden shadow-lg border border-slate-700">
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="absolute -top-10 -right-10 w-40 h-40 bg-green-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-10 w-32 h-32 bg-green-400/10 rounded-full blur-2xl"></div>
       </div>
 
-      {/* --- Profile Card --- */}
-      <div className="relative px-6 sm:px-10">
-        
-        {/* Avatar Section */}
-        <div className="flex flex-col sm:flex-row items-end sm:items-center -mt-12 mb-6 gap-4">
-          <div className="relative group">
-            <div className="h-32 w-32 rounded-full border-4 border-white bg-gray-200 overflow-hidden shadow-md flex items-center justify-center">
-               {/* Use generic avatar if no image */}
-               <span className="text-4xl font-bold text-gray-400">
+      <div className="relative px-2 sm:px-6">
+        {/* Avatar & Basic Info - Horizontal Layout */}
+        <div className="flex flex-row items-center -mt-12 mb-6 gap-6">
+          <div className="relative shrink-0">
+            <div className="h-28 w-28 rounded-3xl border-4 border-white bg-slate-100 overflow-hidden shadow-xl flex items-center justify-center">
+               <span className="text-3xl font-black text-green-600">
                  {formData.full_name.charAt(0)}
                </span>
-               {/* <img src={user.avatarUrl} alt="Profile" className="h-full w-full object-cover" /> */}
             </div>
-            
-            {/* Edit Photo Button */}
             {isEditing && (
-              <button className="absolute bottom-0 right-0 p-2 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all">
-                <Camera size={16} />
+              <button className="absolute bottom-0 right-0 p-2 bg-green-600 text-white rounded-xl shadow-lg border-2 border-white hover:bg-green-700 transition-colors">
+                <Camera size={14} />
               </button>
             )}
           </div>
 
-          <div className="flex-1 text-center sm:text-left mt-2 sm:mt-12">
-             <h1 className="text-2xl font-bold text-gray-900">{formData.full_name}</h1>
-             <p className="text-gray-500 font-medium capitalize flex items-center justify-center sm:justify-start gap-1">
-                <Briefcase size={14} />
-                {formData.role} Account
-             </p>
-          </div>
+          <div className="flex flex-1 flex-row items-center justify-between pt-12">
+             <div className="flex flex-col">
+                <div className="flex items-center gap-2">
+                    <h1 className="text-2xl font-black text-slate-900 tracking-tight">{formData.full_name}</h1>
+                    <ShieldCheck size={20} className="text-green-500" />
+                </div>
+                <p className="text-slate-500 font-bold text-xs flex items-center gap-1.5 mt-0.5">
+                    <Briefcase size={14} className="text-green-600" /> {formData.role} Account
+                </p>
+             </div>
 
-          {/* Action Buttons */}
-          <div className="mt-4 sm:mt-12">
-             {!isEditing ? (
-                 <button 
-                    onClick={() => setIsEditing(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 shadow-sm transition-colors"
-                 >
-                    <Edit2 size={16} />
-                    Edit Profile
-                 </button>
-             ) : (
-                 <div className="flex gap-2">
-                    <button 
-                        onClick={handleCancel}
-                        disabled={isLoading}
-                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 shadow-sm transition-colors"
-                    >
-                        <X size={16} />
-                        Cancel
+             <div className="flex gap-2">
+                {!isEditing ? (
+                    <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 shadow-sm transition-all active:scale-95">
+                        <Edit2 size={16} className="text-green-600" /> Edit
                     </button>
-                    <button 
-                        onClick={handleSave}
-                        disabled={isLoading}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 shadow-sm transition-colors disabled:opacity-70"
-                    >
-                        {isLoading ? 'Saving...' : <><Save size={16} /> Save Changes</>}
-                    </button>
-                 </div>
-             )}
+                ) : (
+                    <>
+                        <button onClick={() => setIsEditing(false)} className="px-4 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-all active:scale-95">
+                            <X size={16} />
+                        </button>
+                        <button onClick={handleSave} className="px-5 py-2.5 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 shadow-lg shadow-green-900/20 transition-all active:scale-95">
+                            {isLoading ? '...' : <Save size={16} />}
+                        </button>
+                    </>
+                )}
+             </div>
           </div>
         </div>
 
-        {/* --- Form Fields --- */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* --- Main Content Flow --- */}
+        <div className="flex flex-col gap-4">
+          
+          {/* Personal Details Section */}
+          <section className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-4">
+            <div className="flex items-center gap-2 border-b border-slate-50 pb-2">
+              <User size={18} className="text-green-600" />
+              <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Personal Details</h3>
+            </div>
             
-            {/* Full Name */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Full Name</label>
-              <div className="relative">
-                 <User className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                 <input 
-                    type="text"
-                    name="full_name"
-                    value={formData.full_name}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-70 disabled:cursor-not-allowed transition-all"
-                 />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-wider">Full Name</label>
+                <input 
+                  type="text" 
+                  name="full_name" 
+                  value={formData.full_name} 
+                  onChange={handleChange} 
+                  disabled={!isEditing} 
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-2xl text-slate-900 font-semibold focus:ring-2 focus:ring-green-500 outline-none disabled:opacity-60 transition-all" 
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-wider">Email Address</label>
+                <div className="relative">
+                  <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
+                  <input 
+                    type="email" 
+                    value={formData.email} 
+                    disabled 
+                    className="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-2xl text-slate-400 font-semibold cursor-not-allowed outline-none" 
+                  />
+                </div>
               </div>
             </div>
+          </section>
 
-            {/* Email (Usually Read-only) */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Email Address</label>
-              <div className="relative">
-                 <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                 <input 
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    disabled={true} // Email is usually immutable
-                    className="w-full pl-10 pr-4 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-gray-500 cursor-not-allowed"
-                 />
+          {/* Settings Section */}
+          <section className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-4">
+            <div className="flex items-center gap-2 border-b border-slate-50 pb-2">
+              <SettingsIcon size={18} className="text-green-600" />
+              <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Preferences</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                  <Languages size={14} /> App Language
+                </label>
+                <select 
+                  name="language" 
+                  value={formData.language} 
+                  onChange={handleChange} 
+                  disabled={!isEditing} 
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-slate-900 font-semibold focus:ring-2 focus:ring-green-500 outline-none disabled:opacity-60 cursor-pointer transition-all"
+                >
+                  <option>English</option>
+                  <option>Hindi</option>
+                  <option>Spanish</option>
+                </select>
               </div>
-              {isEditing && <p className="text-xs text-gray-400">Email cannot be changed.</p>}
-            </div>
 
-            {/* Phone */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Phone Number</label>
-              <div className="relative">
-                 <Phone className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                 <input 
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    placeholder="+1 (555) 000-0000"
-                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-70 disabled:cursor-not-allowed transition-all"
-                 />
+              <div className="bg-slate-50/50 rounded-2xl p-4 space-y-4 border border-slate-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Mic2 size={18} className="text-green-600" />
+                    <span className="text-[11px] font-black text-slate-800 uppercase tracking-tight">Voice Interaction</span>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      name="voiceEnabled" 
+                      checked={formData.voiceEnabled} 
+                      onChange={handleChange} 
+                      disabled={!isEditing} 
+                      className="sr-only peer" 
+                    />
+                    <div className="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-600"></div>
+                  </label>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                    <Volume2 size={14} /> Teacher Persona
+                  </label>
+                  <select 
+                    name="teacherMode" 
+                    value={formData.teacherMode} 
+                    onChange={handleChange} 
+                    disabled={!isEditing} 
+                    className="w-full px-4 py-2 bg-white border border-slate-100 rounded-xl text-slate-900 font-semibold focus:ring-2 focus:ring-green-500 outline-none disabled:opacity-60 cursor-pointer transition-all text-sm"
+                  >
+                    <option>Encouraging</option>
+                    <option>Strict</option>
+                    <option>Casual</option>
+                  </select>
+                </div>
               </div>
             </div>
-
-            {/* Location */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Location</label>
-              <div className="relative">
-                 <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                 <input 
-                    type="text"
-                    name="location"
-                    value={formData.location}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    placeholder="City, Country"
-                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-70 disabled:cursor-not-allowed transition-all"
-                 />
+          </section>
+          <section className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-50 pb-4">
+              <div className="flex items-center gap-2">
+                <Trophy size={18} className="text-green-600" />
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Topic Mastery Heatmap</h3>
               </div>
             </div>
-
-            {/* Bio (Full Width) */}
-            <div className="md:col-span-2 space-y-2">
-              <label className="text-sm font-medium text-gray-700">About Me</label>
-              <textarea 
-                name="bio"
-                rows="4"
-                value={formData.bio}
-                onChange={handleChange}
-                disabled={!isEditing}
-                placeholder="Write a short bio about yourself..."
-                className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-70 disabled:cursor-not-allowed transition-all resize-none"
-              />
+            
+            <div className="grid grid-cols-7 gap-2">
+              {/* Mocking 28 days of study activity intensity */}
+              {[...Array(28)].map((_, i) => (
+                <div 
+                  key={i} 
+                  className={`h-8 rounded-md ${i % 3 === 0 ? 'bg-green-500' : i % 5 === 0 ? 'bg-green-200' : 'bg-slate-100'}`}
+                  title={`Day ${i+1}: 85% Accuracy`}
+                />
+              ))}
             </div>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Intensity reflects correct practice answers over time</p>
+          </section>
 
-          </div>
         </div>
-
       </div>
     </div>
   );

@@ -1,179 +1,258 @@
-import React from 'react';
-import { useAuthStore } from '../authStore'; // Adjust path
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../authStore';
 import { 
-  TrendingUp, 
-  Users, 
-  DollarSign, 
-  Activity, 
-  ArrowUpRight, 
-  ArrowDownRight,
-  MoreHorizontal,
-  Clock
+  BookOpen, 
+  FileText, 
+  BrainCircuit, 
+  Mic2,
+  ChevronRight,
+  Clock,
+  Sparkles,
+  CheckCircle2,
+  TrendingUp,
+  Activity,
+  Plus,
+  BarChart2,
+  AlertCircle
 } from 'lucide-react';
+import { API_BASE_URL } from "../api/apiConfig";
 
-/**
- * --- Helper Component: Stat Card ---
- */
-const StatCard = ({ title, value, change, isPositive, icon: Icon, color }) => (
-  <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-    <div className="flex justify-between items-start">
-      <div>
-        <p className="text-sm font-medium text-gray-500">{title}</p>
-        <h3 className="text-2xl font-bold text-gray-900 mt-1">{value}</h3>
+const SubjectCard = ({ title, fileCount, subjectId, onNavigate, onAnalytics }) => (
+  <div 
+    className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:border-green-100 transition-all group flex flex-col justify-between"
+  >
+    <div>
+      <div className="flex justify-between items-start">
+        <div className="p-3 rounded-2xl bg-green-50 text-green-600 group-hover:bg-green-600 group-hover:text-white transition-colors">
+          <BookOpen className="w-6 h-6" />
+        </div>
+        <button
+          onClick={(e) => { e.stopPropagation(); onAnalytics(subjectId); }}
+          className="p-2 rounded-xl bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all flex items-center gap-1 text-[10px] font-black uppercase"
+          title="View Topic Mastery & Diagnostics"
+        >
+          <BarChart2 className="w-4 h-4" />
+          <span>Analytics</span>
+        </button>
       </div>
-      <div className={`p-2 rounded-lg ${color}`}>
-        <Icon className="w-5 h-5 text-white" />
+      <div className="mt-6">
+        <h3 className="text-lg font-black text-slate-900 group-hover:text-green-700 transition-colors">{title}</h3>
+        <div className="flex items-center text-sm font-bold text-slate-400 mt-1">
+          <FileText className="w-4 h-4 mr-1.5 text-green-500" />
+          {fileCount} Source Documents 
+        </div>
       </div>
     </div>
-    <div className="flex items-center mt-4">
-      <span className={`flex items-center text-sm font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-        {isPositive ? <ArrowUpRight className="w-4 h-4 mr-1" /> : <ArrowDownRight className="w-4 h-4 mr-1" />}
-        {change}
-      </span>
-      <span className="text-sm text-gray-400 ml-2">vs last month</span>
+
+    <div className="flex items-center justify-between mt-8 pt-4 border-t border-slate-50">
+      <span className="text-[10px] font-black text-slate-300 uppercase tracking-tighter">Grounded Workspace</span>
+      <button 
+        onClick={() => onNavigate(subjectId)}
+        className="flex items-center text-green-600 text-xs font-black uppercase tracking-widest hover:underline"
+      >
+        Open Hub <ChevronRight className="w-3 h-3 ml-1" />
+      </button>
     </div>
   </div>
 );
 
-/**
- * --- Main Dashboard Component ---
- */
 const DashboardPage = () => {
-  const user = useAuthStore((state) => state.user);
-  const userName = user?.full_name?.split(' ')[0] || 'User';
+  const { user, token } = useAuthStore();
+  const userName = user?.full_name?.split(' ')[0] || 'Scholar';
+  const navigate = useNavigate();
 
-  // Dummy Data for the "Chart"
-  const chartData = [40, 70, 45, 90, 65, 85, 100, 75, 50, 80, 60, 95];
+  const [subjects, setSubjects] = useState([]);
+  const [analytics, setAnalytics] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const [subRes, analyticsRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/study/subjects/${user.id}`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_BASE_URL}/api/study/analytics/${user.id}`, { headers: { 'Authorization': `Bearer ${token}` } })
+        ]);
+
+        const subData = await subRes.json();
+        const analyticsData = await analyticsRes.json();
+
+        setSubjects(Array.isArray(subData) ? subData : []);
+        
+        const analyticsMap = {};
+        if (Array.isArray(analyticsData)) {
+          analyticsData.forEach(item => { analyticsMap[item.subject_id] = item; });
+        }
+        setAnalytics(analyticsMap);
+
+      } catch (err) {
+        console.error("Dashboard Load Error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (user?.id) fetchDashboardData();
+  }, [user, token]);
+
+  const totalFiles = subjects.reduce((acc, sub) => acc + (sub.files?.length || 0), 0);
+  const activeSubjects = subjects.filter(s => s.files?.length > 0).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 p-2 max-w-7xl mx-auto pb-20">
       
-      {/* --- 1. Header Section --- */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Welcome back, {userName} 👋
+          <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3 tracking-tight">
+            Welcome back, {userName}! <Sparkles className="text-green-500 w-6 h-6 animate-pulse" />
           </h1>
-          <p className="text-gray-500 mt-1">
-            Here's what's happening with your projects today.
+          <p className="text-slate-500 mt-2 font-medium">
+            Your personal AI knowledge base is synchronized and ready for study.
           </p>
         </div>
         <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-500 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm">
-                Last updated: Just now
-            </span>
-            <button className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 shadow-sm transition-colors">
-                + New Report
-            </button>
+          <button 
+            onClick={() => navigate('/app/notes')}
+            className="px-6 py-4 bg-slate-900 text-white font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-slate-800 shadow-xl transition-all flex items-center gap-2"
+          >
+            <Plus size={16} /> Create Subject Scope 
+          </button>
+          <button 
+            onClick={() => navigate('/app/notes')}
+            className="px-6 py-4 bg-green-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-green-700 shadow-xl shadow-green-100 transition-all flex items-center gap-2"
+          >
+            <FileText size={16} /> My Library 
+          </button>
         </div>
       </div>
 
-      {/* --- 2. Statistics Grid --- */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          title="Total Revenue" 
-          value="$54,230" 
-          change="12.5%" 
-          isPositive={true} 
-          icon={DollarSign} 
-          color="bg-blue-500"
-        />
-        <StatCard 
-          title="Active Users" 
-          value="2,453" 
-          change="8.2%" 
-          isPositive={true} 
-          icon={Users} 
-          color="bg-purple-500"
-        />
-        <StatCard 
-          title="Bounce Rate" 
-          value="42.3%" 
-          change="2.1%" 
-          isPositive={false} 
-          icon={Activity} 
-          color="bg-orange-500"
-        />
-        <StatCard 
-          title="New Sales" 
-          value="+574" 
-          change="22.4%" 
-          isPositive={true} 
-          icon={TrendingUp} 
-          color="bg-green-500"
-        />
+      {/* Quick Stats Bar */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 flex items-center gap-5 shadow-sm">
+           <div className="p-4 bg-blue-50 text-blue-600 rounded-2xl"><TrendingUp size={24}/></div>
+           <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Scopes</p>
+              <p className="text-xl font-black text-slate-900">{activeSubjects}</p>
+           </div>
+        </div>
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 flex items-center gap-5 shadow-sm">
+           <div className="p-4 bg-green-50 text-green-600 rounded-2xl"><Activity size={24}/></div>
+           <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Grounded Files</p>
+              <p className="text-xl font-black text-slate-900">{totalFiles}</p>
+           </div>
+        </div>
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 flex items-center gap-5 shadow-sm">
+           <div className="p-4 bg-orange-50 text-orange-600 rounded-2xl"><CheckCircle2 size={24}/></div>
+           <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Practice Completed</p>
+              <p className="text-xl font-black text-slate-900">
+                {Object.values(analytics).reduce((acc, curr) => acc + (curr.practice_count || 0), 0)} Quizzes
+              </p>
+           </div>
+        </div>
       </div>
 
-      {/* --- 3. Main Content Grid --- */}
+      {/* Subject Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {subjects.slice(0, 3).map((sub) => (
+          <SubjectCard 
+            key={sub.id}
+            subjectId={sub.id}
+            title={sub.name}
+            fileCount={sub.files?.length || 0}
+            onNavigate={(id) => navigate(`/app/hub/${id}`)}
+            onAnalytics={(id) => navigate(`/app/analytics/${id}`)}
+          />
+        ))}
+      </div>
+
+      {/* Readiness & Analytics Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Left Col: Analytics Chart (Simulated with CSS) */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-bold text-gray-900">Performance Overview</h3>
-            <button className="p-2 hover:bg-gray-50 rounded-lg text-gray-400">
-                <MoreHorizontal size={20} />
-            </button>
+        {/* Subject Readiness Index */}
+        <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+          <div className="flex justify-between items-center mb-10">
+            <div>
+              <h3 className="text-lg font-black text-slate-900 flex items-center gap-2 tracking-tight">
+                  <BrainCircuit size={24} className="text-green-600" /> Subject Readiness Index
+              </h3>
+              <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">AI analysis of current knowledge coverage</p>
+            </div>
+            <span className="text-[10px] font-black text-green-600 bg-green-50 px-3 py-1.5 rounded-full border border-green-100 uppercase tracking-widest">
+                Grounded
+            </span>
           </div>
           
-          {/* Visual Chart Bars */}
-          <div className="h-64 flex items-end justify-between gap-2 sm:gap-4">
-             {chartData.map((height, index) => (
-                 <div key={index} className="w-full relative group">
-                     {/* Tooltip */}
-                     <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity mb-2">
-                         {height}%
-                     </div>
-                     {/* Bar */}
-                     <div 
-                        style={{ height: `${height}%` }} 
-                        className={`w-full rounded-t-lg transition-all duration-500 ${
-                            index === chartData.length - 1 
-                            ? 'bg-blue-600' // Highlight last bar
-                            : 'bg-blue-100 hover:bg-blue-200'
-                        }`}
-                     ></div>
-                 </div>
-             ))}
-          </div>
-          <div className="flex justify-between mt-4 text-xs text-gray-400 font-medium uppercase tracking-wide">
-             <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span>
-             <span>May</span><span>Jun</span><span>Jul</span><span>Aug</span>
-             <span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span>
+          <div className="space-y-8">
+             {subjects.length > 0 ? subjects.map((sub, index) => {
+                 const fileCount = sub.files?.length || 0;
+                 const mastery = analytics[sub.id]?.mastery_percentage || Math.min(fileCount * 25, 100);
+                 return (
+                   <div key={index} className="group">
+                      <div className="flex justify-between mb-3 items-end px-1">
+                          <span className="text-sm font-black text-slate-700 uppercase tracking-tight group-hover:text-green-600 transition-colors">{sub.name}</span>
+                          <div className="flex items-center gap-3">
+                            <button 
+                              onClick={() => navigate(`/app/analytics/${sub.id}`)}
+                              className="text-[10px] font-black text-blue-600 hover:underline uppercase"
+                            >
+                              In-Depth Diagnostics →
+                            </button>
+                            <span className="text-xs font-black text-green-600 bg-green-50 px-2 py-0.5 rounded-md">{mastery}%</span>
+                          </div>
+                      </div>
+                      <div className="w-full bg-slate-50 h-4 rounded-full overflow-hidden border border-slate-100">
+                          <div 
+                              className="bg-green-500 h-full rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(34,197,94,0.3)]"
+                              style={{ width: `${mastery}%` }}
+                          />
+                      </div>
+                   </div>
+                 )
+             }) : (
+               <p className="text-center text-slate-300 font-bold uppercase py-10">No active study subjects found</p>
+             )}
           </div>
         </div>
 
-        {/* Right Col: Recent Activity */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Recent Activity</h3>
+        {/* Recent Insights Panel */}
+        <div className="bg-slate-900 p-8 rounded-[2.5rem] shadow-2xl flex flex-col border border-slate-800">
+          <h3 className="text-lg font-black text-white mb-6 flex items-center gap-3 tracking-tight">
+            <Mic2 size={24} className="text-green-400" /> Voice & Audio Assistant
+          </h3>
           
-          <div className="flex-1 overflow-y-auto space-y-6 pr-2 custom-scrollbar">
-            
-            {[1, 2, 3, 4, 5].map((item, index) => (
-                <div key={index} className="flex gap-4">
-                    <div className="relative">
-                        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold border border-gray-200">
-                            U{item}
+          <div className="flex-1 space-y-5">
+            {subjects.length > 0 ? subjects.filter(s => s.files?.length > 0).slice(0, 3).map((sub, i) => (
+                <div 
+                  key={i} 
+                  onClick={() => navigate(`/app/hub/${sub.id}`)}
+                  className="p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-green-500/30 transition-all cursor-pointer group"
+                >
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+                          <span className="text-[10px] font-black text-white uppercase tracking-widest">{sub.name}</span>
                         </div>
-                        {index === 0 && (
-                            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
-                        )}
+                        <span className="text-[9px] text-green-400 font-bold uppercase">Launch Voice</span>
                     </div>
-                    <div>
-                        <p className="text-sm text-gray-800 font-medium">
-                            <span className="font-bold">User {item}</span> completed a task in <span className="text-blue-600">Project Alpha</span>.
-                        </p>
-                        <div className="flex items-center text-xs text-gray-400 mt-1">
-                            <Clock size={12} className="mr-1" />
-                            {index * 15 + 2} minutes ago
-                        </div>
-                    </div>
+                    <p className="text-[11px] text-slate-400 font-medium leading-relaxed italic group-hover:text-slate-300">
+                        "Your documents are processed. Speak directly to generate instant audio summaries."
+                    </p>
                 </div>
-            ))}
+            )) : (
+              <div className="flex flex-col items-center justify-center h-full text-slate-700">
+                <Activity size={40} className="mb-3 opacity-20" />
+                <p className="text-[10px] font-black uppercase tracking-widest">No recent logs</p>
+              </div>
+            )}
 
-            <div className="pt-4 border-t border-gray-50 mt-auto">
-                <button className="w-full py-2 text-sm text-blue-600 font-medium hover:bg-blue-50 rounded-lg transition-colors">
-                    View All Activity
+            <div className="pt-6 mt-auto">
+                <button 
+                  onClick={() => navigate('/app/notes')}
+                  className="w-full py-4 text-[10px] font-black text-green-400 border border-green-500/20 uppercase tracking-[0.2em] rounded-xl hover:bg-green-500/10 transition-all"
+                >
+                    Manage Knowledge Base
                 </button>
             </div>
           </div>

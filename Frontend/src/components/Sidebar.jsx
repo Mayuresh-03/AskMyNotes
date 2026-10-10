@@ -1,103 +1,127 @@
 import React from 'react';
-import { NavLink as RouterNavLink } from 'react-router-dom';
+import { NavLink as RouterNavLink, useParams } from 'react-router-dom';
 import { useAuthStore } from '../authStore';
 import { 
     LayoutDashboard, 
-    Layers, 
-    Box, 
-    Settings, 
+    FolderOpen, 
+    MessageSquare, 
+    GraduationCap, 
     User, 
     LogOut,
-    Hexagon
+    BookOpenCheck,
+    CircleDot,
+    Brain
 } from 'lucide-react';
 
-/**
- * --- Reusable NavLink Component ---
- * Keeps your exact styling logic: Active = Blue/White, Inactive = Slate/Hover
- */
-const NavLink = ({ to, icon, children }) => (
+const NavLink = ({ to, icon, children, badge }) => (
     <RouterNavLink
         to={to}
-        end // Ensures accurate active state for exact paths
+        end={to === "/app/dashboard"} 
         className={({ isActive }) =>
-            `flex items-center p-3 my-1 rounded-lg transition-all duration-200 ${
+            `flex items-center justify-between p-3 my-1 rounded-xl transition-all duration-200 ${
                 isActive 
-                ? 'bg-blue-600 text-white font-semibold shadow-md shadow-blue-900/20' 
-                : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
+                ? 'bg-green-600 text-white font-bold shadow-lg shadow-green-900/40' 
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
             }`
         }
     >
-        {icon}
-        <span className="ml-4 text-sm">{children}</span>
+        <div className="flex items-center">
+            {icon}
+            <span className="ml-4 text-sm">{children}</span>
+        </div>
+        {badge && (
+            <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full border border-green-500/20 font-bold">
+                {badge}
+            </span>
+        )}
     </RouterNavLink>
 );
 
-/**
- * --- Main Sidebar Component ---
- */
 export default function Sidebar() {
-    // We grab the logout function from your store
     const logout = useAuthStore((state) => state.logout);
+    const user = useAuthStore((state) => state.user);
+    const { subjectId } = useParams(); 
+    
+    const currentId = subjectId || "1";
+    const userName = user?.full_name || user?.name || "User";
+    const avatarInitial = userName.charAt(0).toUpperCase();
 
     return (
-        // Main Container: Fixed width, Full height, Dark Blue Gradient
-        <div className="h-screen w-72 bg-linear-to-b from-slate-900 to-blue-950 border-r border-slate-700 flex flex-col shrink-0 transition-all duration-300">
+        <div className="h-screen w-72 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0">
             
             {/* Header: Project Branding */}
-            <div className="p-6 border-b border-slate-700 flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                    <div className="bg-blue-600 p-1.5 rounded-lg">
-                        <Hexagon className="h-6 w-6 text-white fill-blue-600" />
+            <div className="p-8 border-b border-slate-800">
+                <div className="flex items-center gap-3">
+                    <div className="bg-green-600 p-2 rounded-xl shadow-lg shadow-green-900/20">
+                        <BookOpenCheck className="h-6 w-6 text-white" />
                     </div>
-                    <h1 className="text-xl font-bold text-gray-100 tracking-tight">ProjectName</h1>
+                    <div>
+                        <h1 className="text-xl font-black text-white tracking-tight">AskMyNotes</h1>
+                        <p className="text-[10px] text-green-500 font-bold uppercase tracking-widest">AI Study Hub</p>
+                    </div>
                 </div>
-                <p className="text-xs text-gray-400 pl-1">Admin Dashboard</p>
             </div>
 
             {/* Navigation Section */}
-            <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
-                
-                {/* Group 1: Main App */}
+            <nav className="flex-1 p-4 space-y-8 overflow-y-auto custom-scrollbar">
                 <div>
-                    <h2 className="px-3 mb-2 text-xs font-semibold text-blue-400 uppercase tracking-wider">
-                        Overview
+                    <h2 className="px-4 mb-3 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
+                        Workspace
                     </h2>
                     <NavLink to="/app/dashboard" icon={<LayoutDashboard size={20} />}>
                         Dashboard
                     </NavLink>
+                    <NavLink to="/app/notes" icon={<FolderOpen size={20} />}>
+                        My Library
+                    </NavLink>
                 </div>
 
-                {/* Group 2: Features (Mapped to your App.jsx files) */}
                 <div>
-                    <h2 className="px-3 mb-2 text-xs font-semibold text-blue-400 uppercase tracking-wider">
-                        Management
+                    <h2 className="px-4 mb-3 text-[10px] font-black text-green-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                        Learning Hub {subjectId && <CircleDot size={8} className="animate-pulse" />}
                     </h2>
-                    <NavLink to="/app/feature-one" icon={<Box size={20} />}>
-                        Inventory
+                    
+                    <NavLink 
+                        to={`/app/hub/${currentId}`} 
+                        icon={<MessageSquare size={20} />}
+                        badge="Voice"
+                    >
+                        Chat with Notes
                     </NavLink>
-                    <NavLink to="/app/feature-two" icon={<Layers size={20} />}>
-                        Analytics
+                    
+                    <NavLink to={`/app/study/${currentId}`} icon={<GraduationCap size={20} />}>
+                        Study Mode
+                    </NavLink>
+
+                    <NavLink to={`/app/flashcards/${currentId}`} icon={<Brain size={20} />}>
+                        Smart Recall
                     </NavLink>
                 </div>
             </nav>
 
-            {/* Footer Section: User Profile & Logout */}
-            <div className="p-4 border-t border-slate-700 bg-slate-900/50">
+            {/* Footer Section with User Name */}
+            <div className="p-4 border-t border-slate-800 bg-slate-900/50">
+                <div className="flex items-center gap-3 px-3 py-2 mb-2 rounded-xl bg-slate-800/50">
+                    <div className="w-8 h-8 rounded-lg bg-green-600 text-white flex items-center justify-center font-black text-sm">
+                        {avatarInitial}
+                    </div>
+                    <div className="overflow-hidden">
+                        <p className="text-xs font-black text-white truncate">{userName}</p>
+                        <p className="text-[9px] text-slate-400 font-bold truncate">{user?.email || ""}</p>
+                    </div>
+                </div>
+
                 <div className="space-y-1">
                     <NavLink to="/app/profile" icon={<User size={20} />}>
                         My Profile
                     </NavLink>
-                    <NavLink to="/app/settings" icon={<Settings size={20} />}>
-                        Settings
-                    </NavLink>
                     
-                    {/* Logout Button */}
                     <button 
                         onClick={logout}
-                        className="w-full flex items-center p-3 my-1 rounded-lg text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all duration-200"
+                        className="w-full flex items-center p-3 my-1 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all font-bold"
                     >
                         <LogOut size={20} />
-                        <span className="ml-4 text-sm font-medium">Log Out</span>
+                        <span className="ml-4 text-sm">Log Out</span>
                     </button>
                 </div>
             </div>

@@ -6,7 +6,6 @@ export const useAuthStore = create((set, get) => ({
   user: null,
   token: null,
   isAuthenticated: false,
-  // 'loading' is NOW ONLY for the initial session check when the app starts.
   loading: true, 
 
   // --- Check Authentication on App Load ---
@@ -46,9 +45,6 @@ export const useAuthStore = create((set, get) => ({
 
   // --- Login ---
   login: async (email, password) => {
-    // REMOVED: set({ loading: true }); 
-    // We do NOT want to trigger the global app loader here.
-    
     const formData = new URLSearchParams();
     formData.append('username', email);
     formData.append('password', password);
@@ -70,10 +66,9 @@ export const useAuthStore = create((set, get) => ({
         user: data.user,
         token: data.access_token,
         isAuthenticated: true,
-        // We don't need to touch 'loading' here, it's already false.
       });
 
-      return true; // Return success
+      return true;
 
     } catch (err) {
       console.error("Login Error:", err);
@@ -81,16 +76,19 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  // --- Google Login ---
-  loginWithToken: (token) => {
+  // --- Google Login with direct User Object fallback ---
+  loginWithToken: (token, userData = null) => {
     try {
-      const decoded = jwtDecode(token);
-      const user = {
-        id: decoded.user_id || decoded.sub,
-        email: decoded.email || decoded.sub,
-        role: decoded.role || 'user',
-        full_name: decoded.name || 'User',
-      };
+      let user = userData;
+
+      if (!user) {
+        const decoded = jwtDecode(token);
+        user = {
+          id: decoded.user_id || decoded.sub,
+          email: decoded.sub || decoded.email,
+          full_name: decoded.name || decoded.full_name || 'User',
+        };
+      }
 
       localStorage.setItem('authToken', token);
       localStorage.setItem('user', JSON.stringify(user));

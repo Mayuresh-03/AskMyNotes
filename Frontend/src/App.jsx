@@ -16,6 +16,12 @@ import Chatbot from './components/Chatbot.jsx';
 // --- Private App Pages ---
 import DashboardPage from './pages/DashboardPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
+import MyNotesPage from './pages/MyNotesPage.jsx';
+import SubjectHub from './pages/SubjectHub.jsx';
+import StudyModePage from './pages/StudyModePage.jsx';
+import FlashcardsPage from './pages/FlashcardsPage.jsx';
+import Library from './pages/Library.jsx';
+import InDepthAnalytics from './pages/InDepthAnalytics.jsx';
 
 // --- Layout ---
 import MainLayout from './components/MainLayout.jsx';
@@ -47,7 +53,7 @@ const router = createBrowserRouter([
     element: <SignupPage />,
   },
 
-  // 📌 Forgot Password Flow (Separated into 3 screens)
+  // Forgot Password Flow
   {
     path: '/forgot-email',
     element: <ForgotEmailPage />,
@@ -73,6 +79,12 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="/app/dashboard" replace /> },
       { path: 'dashboard', element: <DashboardPage /> },
+      { path: 'library', element: <Library /> },
+      { path: 'notes', element: <MyNotesPage /> },
+      { path: 'hub/:subjectId', element: <SubjectHub /> },
+      { path: 'study/:subjectId', element: <StudyModePage /> },
+      { path: 'flashcards/:subjectId', element: <FlashcardsPage /> },
+      { path: 'analytics/:subjectId', element: <InDepthAnalytics /> },
       { path: 'profile', element: <ProfilePage /> },
     ],
   },
